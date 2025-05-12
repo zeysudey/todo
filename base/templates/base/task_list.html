@@ -28,9 +28,11 @@
                 🚪🏃{% trans "Logout" %}
             </a>
         {% else %}
-            <a href="{% url 'login' %}" class="login-link">
-                🚪🔑{% trans "Login" %}
-            </a>
+           <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit">Çıkış Yap</button>
+            </form>
+
         {% endif %}
     </div>
 </div>
