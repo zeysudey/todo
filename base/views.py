@@ -56,12 +56,6 @@ class TaskList(LoginRequiredMixin, ListView):
     template_name = 'base/tasks.html' # görevlerin listeleneceği sayfa
     model = Task # görevlerin listeleneceği model
     context_object_name = 'tasks' 
-    def dispatch(self, request, *args, **kwargs):
-        from django.utils import translation
-        translation.activate('tr')  # 🟢 Türkçe dili aktif edilir
-        request.session[translation.LANGUAGE_SESSION_KEY] = 'tr'
-        return super().dispatch(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs): # context verileri
         context = super().get_context_data(**kwargs) # üst sınıfın context verilerini al
         context['tasks'] = context['tasks'].filter(user=self.request.user) # kullanıcının görevlerini al
