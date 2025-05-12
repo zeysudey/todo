@@ -23,17 +23,15 @@
             🌐
         </button>
 
-        {% if request.user.is_authenticated %}
-            <a href="{% url 'logout' %}" class="logout-link">
-                🚪🏃{% trans "Logout" %}
-            </a>
-        {% else %}
-           <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit">Çıkış Yap</button>
-            </form>
-
+       {% if request.user.is_authenticated %}
+    <    form method="post" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="logout-link" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">
+                🚪🏃 {% trans "Logout" %}
+            </button>
+        </form>
         {% endif %}
+
     </div>
 </div>
 
