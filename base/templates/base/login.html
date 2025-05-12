@@ -1,0 +1,46 @@
+{% extends 'base/main.html' %}
+{% block content %}
+{% load i18n %} <!-- çevirme kütüphanesi  -->
+
+<div class="header-bar">
+    <div class="header-left">
+    <h1>{% trans "Login" %}</h1> <!-- Başlık -->
+    </div>  
+    <div class="header-right">
+        <!--Dil  Ayarlari Butonu -->
+    <button onclick=window.location.href="{% url 'toggle_language' %}" class="icon-btn" title="Dil değiştir" ">
+    <h1>🌐</h1> 
+</button>
+</div>  
+</div>
+<div class="card-body">
+    <form method="POST">
+        {% csrf_token %} <!-- CSRF koruma tokeni -->
+        {{form.as_p}}    <!-- Form göster -->
+        <input class="button" type="submit" value="Login">
+    </form>
+    <p>{% trans "Don't have an account?" %} <a href="{% url 'register' %}">{% trans "Register" %}</a></p> <!-- Kayıt olma bağlantısı -->
+</div>
+<style>
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    .header-left h1 {
+        margin: 0;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+    }
+    .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+    }
+</style>
+{% endblock content %}

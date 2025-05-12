@@ -1,0 +1,309 @@
+{% extends 'base/main.html' %} {% block content %} {% load static %} {% load i18n %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<div class="header-bar">
+    <div class="header-left">
+        <h1>{% trans "Hello" %} {{ request.user|title }}</h1>
+        <h2>{% trans "Welcome to your task list" %}</h2>
+        <h3>
+            {% blocktrans count task_count=count %}
+                You have <i>{{ task_count }}</i> incomplete task
+            {% plural %}
+                You have <i>{{ task_count }}</i> incomplete tasks
+            {% endblocktrans %}
+        </h3>
+    </div>
+
+    <div class="header-right">
+        <!-- Ayarlar Butonu -->
+        <button onclick="openSettingsModal()" class="icon-btn" title="Ayarlar">
+            ⚙️
+        </button>
+        <!-- Dil Değiştir Butonu -->
+        <button onclick=window.location.href="{% url 'toggle_language' %}" class="icon-btn" title="Dil değiştir">
+            🌐
+        </button>
+
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="logout-link">
+                🚪🏃{% trans "Logout" %}
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" class="login-link">
+                🚪🔑{% trans "Login" %}
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+
+<div id="search-add-wrapper">
+    <form method="GET" style="display: flex;">
+        <input type='text' name='search-area' placeholder="Search your task" value="{{search_input}}">
+        <input class="button" type="submit" value='Search'>
+    </form>
+    {% if tasks|length > 0 %}
+    <a id="add-link" href="{% url 'task-create' %}">&#x2b;</a>
+    {% endif %}
+</div>
+
+
+<!-- Hidden form. Form submits new item positions -->
+<form style="display: none;" id="reorderForm" method="post" action="{% url 'task-reorder' %}">
+    {% csrf_token %}
+    <input type="hidden" id="positionInput" name="position">
+</form>
+
+<!-- Task List -->
+<div id="tasklist" class="task-items-wrapper">
+    {% for task in tasks %}
+    <div class="task-wrapper
+                {% if task.deadline and not task.complete %}
+                    {% if task.days_left < 2 %}
+                        red-bg
+                    {% elif task.days_left <= 5 %}
+                        orange-bg
+                    {% endif %}
+                {% endif %}"
+        data-position="{{task.pk}}">
+        <div class="task-title">
+            {% if task.complete %}
+                <div class="task-complete-icon"></div>
+                <i><s><a href="{% url 'task-update' task.id %}">{{task}}</a></s></i>
+            {% else %}
+                <div class="task-incomplete-icon"></div>
+                <a href="{% url 'task-update' task.id %}">{{task}}</a>
+            {% endif %}
+        </div>
+        <div class="task-controls">
+            <a class="delete-link" href="{% url 'task-delete' task.id %}">&#215;</a>
+            <span class="handle">&nbsp;&#10247;</span>
+        </div>
+    </div>
+
+    {% empty %}
+    <div style="text-align: center; padding-bottom: 10px; line-height: 1em;">
+        <h3>{% trans "No new tasks are created." %}</h3>
+        <h3>{% trans "Create a" %} <a style="text-decoration: none; color: #e53935;" href="{% url 'task-create' %}">{% trans "New task" %}</a> !</h3>
+    </div>
+    {% endfor %}
+</div>
+<!-- Ayar Modalı -->
+<div id="settingsModal" style="
+    display:none; 
+    position:fixed; 
+    top:50%; 
+    left:50%; 
+    transform:translate(-50%, -50%); 
+    background:#fff; 
+    padding:24px; 
+    border-radius:12px; 
+    box-shadow:0 8px 20px rgba(0,0,0,0.15); 
+    z-index:1000; 
+    width:350px;
+    font-family:Arial, sans-serif;
+">
+    <h2 style="margin-top:0; margin-bottom:20px; text-align:center;">⚙️{% trans "Setting" %}</h2>
+
+    <form method="post" action="{% url 'update_user_info' %}" style="display:flex; flex-direction:column; gap:12px;">
+        {% csrf_token %}
+        
+        <label style="font-weight:600;">{% trans "User name" %}</label>
+        <input type="text" name="username" value="{{ user.username }}" required
+               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label style="font-weight:600;">{% trans "Email" %}</label>
+        <input type="email" name="email" value="{{ user.email }}" required
+               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <button type="submit" style="
+            padding:10px;
+            background-color:#4CAF50;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        ">💾 {% trans "Update" %}</button>
+    </form>
+
+    <hr style="margin:20px 0;">
+
+    <button onclick="openPasswordModal()" style="
+        padding:10px;
+        background-color:#2196F3;
+        color:white;
+        border:none;
+        border-radius:6px;
+        width:100%;
+        cursor:pointer;
+    ">🔒  {%trans "Change password" %}</button>
+
+    <button onclick="closeSettingsModal()" style="
+        margin-top:12px;
+        padding:8px;
+        background-color:#f44336;
+        color:white;
+        border:none;
+        border-radius:6px;
+        width:100%;
+        cursor:pointer;
+    ">❌ {% trans "Close" %}</button>
+</div>
+<!-- Modal for changing password -->
+<div id="passwordModal" style="
+    display:none; 
+    position:fixed; 
+    top:50%; 
+    left:50%; 
+    transform:translate(-50%, -50%); 
+    background:#fff; 
+    padding:24px; 
+    border-radius:12px; 
+    box-shadow:0 8px 20px rgba(0,0,0,0.15); 
+    z-index:1001; 
+    width:350px;
+    font-family:Arial, sans-serif;
+">
+    <h2 style="margin-top:0; margin-bottom:20px; text-align:center;">🔐 {%trans "Change password"%}</h2>
+
+    <form method="post" action="{% url 'change_password' %}" style="display:flex; flex-direction:column; gap:12px;">
+        {% csrf_token %}
+        
+        <label style="font-weight:600;">{% trans "password" %}</label>
+        <input type="password" name="old_password" required
+               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label style="font-weight:600;">{% trans "New password" %}</label>
+        <input type="password" name="new_password1" required
+               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label style="font-weight:600;">{% trans "New password" %}</label>
+        <input type="password" name="new_password2" required
+               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <button type="submit" style="
+            padding:10px;
+            background-color:#4CAF50;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        ">💾 {% trans "Update password" %}</button>
+    </form>
+
+    <button onclick="closePasswordModal()" style="
+        margin-top:12px;
+        padding:8px;
+        background-color:#f44336;
+        color:white;
+        border:none;
+        border-radius:6px;
+        width:100%;
+        cursor:pointer;
+    ">❌ {%trans "Close" %}</button>
+</div>
+
+<style>
+    .red-bg {
+        background-color: #FE99A1;
+    }
+
+    .orange-bg {
+        background-color: #ffcc00;
+    }
+    .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ff7f7f;
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+}
+
+.header-left {
+    flex: 1;
+    text-align: left;
+}
+
+.header-left h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.header-left h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.header-left h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1px; /* Butonlar arasındaki boşluğu ayarlamak için gap kullanıyoruz */
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;  /* Simgelerin boyutunu ayarlamak için */
+}
+
+.logout-link, .login-link {
+    color: white;
+    font-size: 24px;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.logout-link:hover, .login-link:hover {
+    text-decoration: underline;
+}
+</style>
+<script>
+    var taskList = document.getElementById("tasklist");
+    var reorderForm = document.getElementById("reorderForm");
+    var positionInput = document.getElementById("positionInput");
+
+    let sortable = Sortable.create(taskList, {
+        handle: '.handle',
+        ghostClass: 'dropArea',
+        chosenClass: 'selectedTask',
+
+    });
+    
+    function reordering() {
+        const rows = document.getElementsByClassName("task-wrapper");
+        let pos = [];
+        for (let row of rows) {
+            pos.push(row.dataset.position);
+        }
+        console.log(pos.join(","))
+        positionInput.value = pos.join(',');
+        reorderForm.submit();
+    }
+
+    document.ondrop = reordering
+
+    function openSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'block';
+    }
+    function closeSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+    function openPasswordModal() {
+        document.getElementById('passwordModal').style.display = 'block';
+    }
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+</script>
+
+
+<!-- Ayar Modalı -->
+
+{% endblock content %}

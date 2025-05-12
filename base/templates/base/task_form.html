@@ -1,0 +1,31 @@
+{% extends 'base/main.html' %}
+{% block content %}
+{% load i18n %}
+
+<div class="header-bar">
+    <a href="{% url 'tasks' %}">↩️{% trans "Back" %}</a>
+</div>
+
+
+<div class="card-body">
+    <form method="POST" action="">
+        {% csrf_token %}
+        {{form.as_p}}
+        <!-- eğer deadline_text var ve task.complete false ise -->
+        {% if deadline_text and not task.complete %} 
+            <p><strong>{% trans "Dead Line:" %}</strong> {{ deadline_text }}</p>
+            {% if days_left %}
+                <p><strong>{% trans "Left days:" %}</strong> {{ days_left }} {% trans "Day"%}</p>
+            {% endif %}
+        {% endif %}
+        {% if task.complete %}
+            <p>📌 <strong>{% trans "Status" %}:</strong>{% trans " Done" %}</p>
+        {% else %}
+            <p><strong>{% trans "Status" %}:</strong> {% trans "continue" %}</p>
+        {% endif %}
+        <input class="button" type="submit" value="Submit">
+    </form>
+</div>
+
+
+{% endblock content %}
