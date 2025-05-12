@@ -24,16 +24,15 @@
         </button>
 
        {% if request.user.is_authenticated %}
-    <    form method="post" action="{% url 'logout' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="logout-link" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">
-                🚪🏃 {% trans "Logout" %}
-            </button>
-        </form>
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">
+                    🚪🏃 {% trans "Logout" %}
+                </button>
+            </form>
         {% endif %}
-
+        </div>
     </div>
-</div>
 
 
 <div id="search-add-wrapper">
